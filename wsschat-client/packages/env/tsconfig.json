@@ -1,0 +1,3 @@
+{
+  "extends": "@wsschat-client/config/tsconfig.base.json"
+}
