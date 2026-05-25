@@ -33,3 +33,6 @@ build/
 .vscode/
 
 .venv
+node_modules/
+wsschat-client/node_modules/
+
