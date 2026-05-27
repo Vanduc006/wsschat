@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 import { Input } from "./components/ui/input"
 import { Button } from "./components/ui/button"
@@ -12,8 +12,21 @@ type ChatType = {
     username: string
 }
 
-function ChatApp() {
+type TypingType = {
+    username: string,
+    isTyping: false
+}
 
+type ChatAppProps = {
+    // username: string,
+    connectedUser: string,
+}
+
+function ChatApp({
+    connectedUser
+}: ChatAppProps) {
+
+    // console.log
     const {
         connected,
         subscribe,
@@ -21,11 +34,11 @@ function ChatApp() {
     } = useStomp()
 
     const [username, setUsername] =
-        useState("")
+        useState(connectedUser)
 
-    const [connectedUser,
-        setConnectedUser] =
-        useState("")
+    // const [connectedUser,
+    //     setConnectedUser] =
+    //     useState("")
 
     const [to, setTo] =
         useState("")
@@ -36,49 +49,80 @@ function ChatApp() {
     const [chat, setChat] =
         useState<ChatType[]>([])
 
+    const [typing, setTyping] = useState<TypingType | undefined>()
+    const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
     useEffect(() => {
 
         if (
-            !connected ||
-            !connectedUser
+            !connected
         ) {
             return
         }
 
         subscribe(
             `/queue/messages-user${connectedUser}`,
-
             (msg) => {
+                // console.log("New message")
+                const data = JSON.parse(msg.body)
+                // console.log(data)
 
-                setChat((prev) => [
+                switch (data.eventType) {
+                    case "CHAT":
+                        setChat((prev) => [
+                            ...prev,
+                            {
+                                to: data.payload.receiver_username,
+                                username: data.payload.sender_username,
+                                message: data.payload.message_content
+                            }
+                        ])
+                        break
 
-                    ...prev,
+                    case "TYPING":
+                        console.log(data.payload)
+                        const typingEvent = {
+                            username: data.payload.sender_username,
+                            isTyping: data.payload.is_typing
+                        } as TypingType
+                        setTyping(typingEvent)
+                        if (typingTimeoutRef.current) {
+                            clearTimeout(typingTimeoutRef.current)
+                        }
+                        typingTimeoutRef.current = setTimeout(() => {
+                            setTyping({
+                                username: typingEvent.username,
+                                isTyping: false
+                            })
+                        }, 100)
+                        break
+                }
 
-                    {
-                        to: connectedUser,
-                        username: "server",
-                        message: msg.body
-                    }
-                ])
             }
         )
 
     }, [
         connected,
-        connectedUser,
+        username,
         subscribe
     ])
 
-    const handleConnect = () => {
-
-        setConnectedUser(username)
-    }
+    // const handleConnect = () => {
+    //     setConnectedUser(username)
+    // }
 
     const handleSend = () => {
-
+        if (!to) {
+            return;
+        }
+        const payload = {
+            sender_username: connectedUser,
+            receiver_username: to,
+            message_content: message,
+        }
         send(
-            "/app/hello",
-            to
+            "/app/chat.send",
+            payload
         )
 
         setChat((prev) => [
@@ -96,35 +140,31 @@ function ChatApp() {
         setMessage("")
     }
 
+    const handleTyping = () => {
+        if (!to) {
+            return;
+        }
+        console.log("typing ...")
+        const payload = {
+            sender_username: connectedUser,
+            receiver_username: to,
+            is_typing: true
+        }
+        send("/app/chat.typing", payload)
+    }
+
     return (
 
-        <div className="m-5">
+        <div>
 
-            <div className="flex gap-2 mt-5">
-
-                <div>
-                    Your name
-                </div>
-
-                <Input
-                    value={username}
-                    onChange={(e) =>
-                        setUsername(
-                            e.target.value
-                        )
-                    }
-                />
-
-                <Button
-                    onClick={
-                        handleConnect
-                    }
-                >
-                    Connect
-                </Button>
-
-            </div>
-
+            {/* <Button
+                onClick={
+                    handleConnect
+                }
+            >
+                Connect
+            </Button> */}
+            <div>hello {connectedUser} !</div>
             <div className="flex gap-2 mt-5">
 
                 <div>To</div>
@@ -132,6 +172,7 @@ function ChatApp() {
                 <Input
                     value={to}
                     onChange={(e) =>
+
                         setTo(
                             e.target.value
                         )
@@ -148,11 +189,10 @@ function ChatApp() {
 
                 <Input
                     value={message}
-                    onChange={(e) =>
-                        setMessage(
-                            e.target.value
-                        )
-                    }
+                    onChange={(e) => {
+                        setMessage(e.target.value)
+                        handleTyping()
+                    }}
                 />
 
             </div>
@@ -163,6 +203,15 @@ function ChatApp() {
             >
                 Send
             </Button>
+
+            <div>
+                {typing?.isTyping ?
+                    <div>
+                        {typing?.username} is typing ...
+                    </div> :
+                    <div></div>
+                }
+            </div>
 
             <div className="mt-10 space-y-2">
 
@@ -207,15 +256,65 @@ function ChatApp() {
 export default function App() {
 
     const [username, setUsername] =
-        useState("duc")
+        useState("")
+
+    const [connectedUser,
+        setConnectedUser] =
+        useState("")
+
+    if (!connectedUser) {
+
+        return (
+
+            <div className="m-5">
+
+                <div className="flex gap-2 mt-5">
+
+                    <div>
+                        Your name
+                    </div>
+
+                    <Input
+                        value={username}
+
+                        onChange={(e) =>
+                            setUsername(
+                                e.target.value
+                            )
+                        }
+                    />
+
+                    <Button
+                        onClick={() =>
+                            setConnectedUser(
+                                username
+                            )
+                        }
+                    >
+                        Connect
+                    </Button>
+
+                </div>
+
+            </div>
+        )
+    }
 
     return (
 
         <StompProvider
-            username={username}
+            username={connectedUser}
         >
 
-            <ChatApp />
+            <div className="m-5">
+
+                <ChatApp
+                    connectedUser={
+                        connectedUser
+                    }
+                />
+
+            </div>
 
         </StompProvider>
     )
