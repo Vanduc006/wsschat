@@ -72,9 +72,9 @@ function ChatApp({
                         setChat((prev) => [
                             ...prev,
                             {
-                                to: data.payload.receiver_username,
-                                username: data.payload.sender_username,
-                                message: data.payload.message_content
+                                to: data.payload.receiverUsername,
+                                username: data.payload.senderUsername,
+                                message: data.payload.messageContent
                             }
                         ])
                         break
@@ -82,8 +82,8 @@ function ChatApp({
                     case "TYPING":
                         console.log(data.payload)
                         const typingEvent = {
-                            username: data.payload.sender_username,
-                            isTyping: data.payload.is_typing
+                            username: data.payload.senderUsername,
+                            isTyping: data.payload.isTyping
                         } as TypingType
                         setTyping(typingEvent)
                         if (typingTimeoutRef.current) {
@@ -94,7 +94,7 @@ function ChatApp({
                                 username: typingEvent.username,
                                 isTyping: false
                             })
-                        }, 100)
+                        }, 500)
                         break
                 }
 
@@ -116,9 +116,9 @@ function ChatApp({
             return;
         }
         const payload = {
-            sender_username: connectedUser,
-            receiver_username: to,
-            message_content: message,
+            senderUsername: connectedUser,
+            receiverUsername: to,
+            messageContent: message,
         }
         send(
             "/app/chat.send",
@@ -141,14 +141,14 @@ function ChatApp({
     }
 
     const handleTyping = () => {
-        if (!to) {
+        if (!to || !message) {
             return;
         }
         console.log("typing ...")
         const payload = {
-            sender_username: connectedUser,
-            receiver_username: to,
-            is_typing: true
+            senderUsername: connectedUser,
+            receiverUsername: to,
+            isTyping: true
         }
         send("/app/chat.typing", payload)
     }
@@ -214,40 +214,30 @@ function ChatApp({
             </div>
 
             <div className="mt-10 space-y-2">
+                {chat.map((item, index) => {
+                    const isCurrentUser = item.username === connectedUser;
 
-                {chat.map(
-                    (item, index) => (
-
+                    return (
                         <div
                             key={index}
-                            className="border p-2 rounded"
+                            className={`flex w-full ${isCurrentUser ? 'justify-end' : 'justify-start'}`}
                         >
-
-                            <div>
-                                from:
-                                {" "}
-                                {
-                                    item.username
-                                }
-                            </div>
-
-                            <div>
-                                to:
-                                {" "}
-                                {item.to}
-                            </div>
-
-                            <div>
-                                {
-                                    item.message
-                                }
-                            </div>
-
+                            {isCurrentUser ? (
+                                <div className="w-fit border p-2 rounded-lg text-right">
+                                    <span className="block text-xs opacity-75 mb-1">{item.username}</span>
+                                    <p className="text-sm font-medium">{item.message}</p>
+                                </div>
+                            ) : (
+                                <div className="w-fit border p-2 rounded-lg bg-blue-200">
+                                    <span className="block text-xs text-gray-500 mb-1">{item.username}</span>
+                                    <p className="text-sm font-medium">{item.message}</p>
+                                </div>
+                            )}
                         </div>
-                    )
-                )}
-
+                    );
+                })}
             </div>
+
 
         </div>
     )

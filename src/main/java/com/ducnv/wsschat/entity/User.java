@@ -1,4 +1,4 @@
-package com.ducnv.wsschat.model;
+package com.ducnv.wsschat.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -31,6 +31,9 @@ public class User extends BaseEntity {
 
     @NotBlank(message = "User is required")
     private String username;
+
+    @NotBlank(message = "Fullname is required")
+    private String fullname;
     
     @NotBlank(message = "Email is required")
     private String email;

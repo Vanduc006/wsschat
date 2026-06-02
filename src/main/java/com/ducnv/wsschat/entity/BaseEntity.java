@@ -1,4 +1,4 @@
-package com.ducnv.wsschat.model;
+package com.ducnv.wsschat.entity;
 
 import java.time.Instant;
 

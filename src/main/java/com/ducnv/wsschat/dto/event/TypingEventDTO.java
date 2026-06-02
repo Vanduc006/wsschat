@@ -10,9 +10,13 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class TypingEventDTO {
-    private Long sender_id;
-    private String sender_username;
-    private Long receiver_id;
-    private String receiver_username;
-    private Boolean is_typing;
+    private String senderUsername;
+    private String senderFullname;
+    private Long senderId;
+
+    private String receiverUsername;
+    private String receiverFullname;
+    private Long receiverId;
+
+    private Boolean isTyping;
 }

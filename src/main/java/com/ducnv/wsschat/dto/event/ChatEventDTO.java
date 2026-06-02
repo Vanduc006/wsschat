@@ -14,10 +14,15 @@ import lombok.NoArgsConstructor;
 public class ChatEventDTO {
     // private RoomType roomType;
     // private Long roomId;
-    private Long chat_id;
-    private String sender_username;
-    private Long sender_id;
-    private String receiver_username;
-    private Long receiver_id;
-    private String message_content;
+    private Long id;
+
+    private String senderUsername;
+    private String senderFullname;
+    private Long senderId;
+
+    private String receiverUsername;
+    private String receiverFullname;
+    private Long receiverId;
+
+    private String messageContent;
 }

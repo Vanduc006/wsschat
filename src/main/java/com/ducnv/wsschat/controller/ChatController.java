@@ -16,7 +16,7 @@ import com.ducnv.wsschat.model.Message;
 import com.ducnv.wsschat.utils.constant.SocketEventType;
 
 @Controller
-public class MessageController {
+public class ChatController {
     // @MessageMapping("/hello")
     // @SendTo("/topic/messages")
     // public String getMessage(String username) {
@@ -30,15 +30,15 @@ public class MessageController {
     @MessageMapping("/chat.send")
     public void send(SimpMessageHeaderAccessor accessor, @Payload ChatEventDTO newChatEventDTO) {
         simpMessagingTemplate.convertAndSend(
-            "/queue/messages-user" + newChatEventDTO.getReceiver_username(),
+            "/queue/messages-user" + newChatEventDTO.getReceiverUsername(),
             // newMessage.getMessage_content()
             SocketEventDTO.builder()
                 .eventType(SocketEventType.CHAT)
                 .payload(
                     ChatEventDTO.builder()
-                        .receiver_username(newChatEventDTO.getReceiver_username())
-                        .sender_username(accessor.getUser().getName())
-                        .message_content(newChatEventDTO.getMessage_content())
+                        .receiverUsername(newChatEventDTO.getReceiverUsername())
+                        .senderUsername(accessor.getUser().getName())
+                        .messageContent(newChatEventDTO.getMessageContent())
                         .build()
                 )
                 .build()
@@ -49,13 +49,13 @@ public class MessageController {
     public void type(SimpMessageHeaderAccessor accessor, @Payload TypingEventDTO newTypingEventDTO) {
         // String username = accessor.getUser().getName();
         simpMessagingTemplate.convertAndSend(
-            "/queue/messages-user" + newTypingEventDTO.getReceiver_username(),
+            "/queue/messages-user" + newTypingEventDTO.getReceiverUsername(),
             SocketEventDTO.builder()
                 .eventType(SocketEventType.TYPING)
                 .payload(
                     TypingEventDTO.builder()
-                        .sender_username(accessor.getUser().getName())
-                        .is_typing(newTypingEventDTO.getIs_typing())
+                        .senderUsername(accessor.getUser().getName())
+                        .isTyping(newTypingEventDTO.getIsTyping())
                         .build()
                 )
                 .build()
