@@ -32,13 +32,13 @@ import com.nimbusds.jose.util.Base64;
 public class SecurityUtil {
     private final JwtEncoder jwtEncoder;
 
-    @Value("${miniecom.jwt.base64-secret}")
+    @Value("${wsschat.jwt.base64-secret}")
     private String JWTkey;
 
-    @Value("${miniecom.jwt.access-token-validity-in-seconds}")
+    @Value("${wsschat.jwt.access-token-validity-in-seconds}")
     private long accessTokenExpriration;
 
-    @Value("${miniecom.jwt.refresh-token-validity-in-seconds}")
+    @Value("${wsschat.jwt.refresh-token-validity-in-seconds}")
     private long refreshTokenExpriration;
 
     public SecurityUtil(JwtEncoder jwtEncoder) {

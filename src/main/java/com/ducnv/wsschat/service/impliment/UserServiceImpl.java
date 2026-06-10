@@ -16,18 +16,24 @@ import com.ducnv.wsschat.dto.user.UserDTO;
 import com.ducnv.wsschat.entity.User;
 import com.ducnv.wsschat.mapper.UserMapper;
 import com.ducnv.wsschat.repository.UserRepository;
+import com.ducnv.wsschat.repository.UserSessionRepository;
 import com.ducnv.wsschat.service.UserService;
+
+import jakarta.transaction.Transactional;
 
 @Service
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+    private final UserSessionRepository userSessionRepository;
 
-    public UserServiceImpl(UserRepository userRepository, UserMapper userMapper) {
+    public UserServiceImpl(UserRepository userRepository, UserMapper userMapper, UserSessionRepository userSessionRepository) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
+        this.userSessionRepository = userSessionRepository;
     }
 
+    @Override
     public UserDTO handleCreateUser(CreateUserDTO createUserDTO) {
         // exist username
         if (this.userRepository.existsByUsernameAndDeletedAtIsNull(createUserDTO.username())) {
@@ -44,6 +50,7 @@ public class UserServiceImpl implements UserService {
         return this.userMapper.toResponseDTO(createdUser);
     }
 
+    @Override
     public PaginationDTO<UserDTO> handleGetAllUsers(Pageable userPageable) {
         Page<User> currentPage = this.userRepository.findAllByDeletedAtIsNull(userPageable);
         // pageUser.getContent()
@@ -65,6 +72,7 @@ public class UserServiceImpl implements UserService {
             .build();
     }
 
+    @Override
     public UserDTO handleGetUserById(Long id) {
         User currentUser = this.userRepository.findByIdAndDeletedAtIsNull(id).orElseThrow(() ->
             new NoSuchElementException("User not found")
@@ -73,6 +81,7 @@ public class UserServiceImpl implements UserService {
         return this.userMapper.toResponseDTO(currentUser);
     }
 
+    @Override
     public UserDTO handleUpdateUserById(Long id, UpdateUserDTO updateUserDTO) {
         User currentUser = this.userRepository.findByIdAndDeletedAtIsNull(id).orElseThrow(() ->
             new NoSuchElementException("User not found")
@@ -92,10 +101,17 @@ public class UserServiceImpl implements UserService {
         return this.userMapper.toResponseDTO(updatedUser);
     }
 
+    @Override
+    @Transactional
     public void handleDeteleUserById(Long id) {
         User currentUser = this.userRepository.findByIdAndDeletedAtIsNull(id).orElseThrow(() -> 
             new IllegalArgumentException("User not found")
         );
+
+        this.userSessionRepository.findByUserAndDeletedAtIsNull(currentUser).forEach(usersession -> {
+            usersession.setDeletedAt(Instant.now());
+            this.userSessionRepository.save(usersession);
+        });
 
         currentUser.setDeletedAt(Instant.now());
         this.userRepository.save(currentUser);
